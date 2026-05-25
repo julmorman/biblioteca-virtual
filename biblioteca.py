@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_google_sheets import GoogleSheetsConnection
+from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
 # 1. Configuración de la pestaña del navegador
@@ -24,7 +24,7 @@ url = "https://docs.google.com/spreadsheets/d/1YeDJ2Mp7YRj1wW5ktGAly3kbPANAOvQXT
 
 try:
     # ttl=0 hace que refresque la info al instante si cambia el Excel
-    conn = st.connection("gsheets", type=GoogleSheetsConnection)
+    conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(spreadsheet=url, ttl=0)
 
     # --- TABLA DE STOCK INTELIGENTE ---
