@@ -27,39 +27,40 @@ try:
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(spreadsheet=url, ttl=0)
 
-# --- PESTAÑAS DE LA APLICACIÓN ---
+# Importamos datetime para registrar el día del préstamo automáticamente
+    from datetime import datetime
+
+    # --- PESTAÑAS DE LA APLICACIÓN ---
     tab1, tab2 = st.tabs(["📖 Catálogo Disponibles", "🙋 Solicitar Préstamo"])
 
     with tab1:
         st.subheader("📚 Libros en Estantería")
         
-        # Filtramos: Solo mostramos los libros cuyo estado sea 1 (Disponible)
-        df['Estado'] = pd.to_numeric(df['Estado'], errors='coerce')
-        disponibles = df[df['Estado'] == 1]
+        # Convertimos la columna 'Disponibles' a números por seguridad
+        df['Disponibles'] = pd.to_numeric(df['Disponibles'], errors='coerce')
+        
+        # Filtramos para mostrar solo los que tienen stock real en el colegio
+        libros_con_stock = df[df['Disponibles'] > 0]
 
-        if not disponibles.empty:
-            # Mostramos una tabla limpia con las mayúsculas correctas de tu Excel
-            st.dataframe(disponibles[['Titulo', 'Autor']], width="stretch", hide_index=True)
+        if not libros_con_stock.empty:
+            st.dataframe(libros_con_stock[['Titulo', 'Autor']], width="stretch", hide_index=True)
         else:
             st.warning("Lo sentimos, no hay libros disponibles en este momento.")
 
     with tab2:
         st.subheader("🙋 Registrar Pedido de Préstamo")
         
-        # Creamos el formulario interactivo
         with st.form("formulario_prestamo", clear_on_submit=True):
             nombre_alumno = st.text_input("Nombre y Apellido del Alumno:")
             año_curso = st.selectbox("Año / Curso:", ["1ro", "2do", "3ro", "4to", "5to", "6to"])
             
-            # Cargamos los títulos reales filtrados con la mayúscula correcta ('Titulo')
-            if not disponibles.empty:
-                lista_libros = disponibles['Titulo'].tolist()
+            if not libros_con_stock.empty:
+                lista_libros = libros_con_stock['Titulo'].tolist()
             else:
                 lista_libros = ["No hay stock disponible"]
                 
-            libro_elegido = st.selectbox("Seleccioná el Libro que querés llevarte:", lista_libros)
+            libro_elegido = st.selectbox("Seleccioná el Libro que querés llevarte (Podés escribir para buscar):", lista_libros)
             
-            # El botón obligatorio para que funcione el formulario
             boton_enviar = st.form_submit_button("Confirmar Reserva de Libro")
             
             if boton_enviar:
@@ -68,7 +69,22 @@ try:
                 elif libro_elegido == "No hay stock disponible":
                     st.error("❌ No podés solicitar préstamos si no hay stock disponible.")
                 else:
-                    st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada. Pasá por biblioteca a retirarlo.")
+                    try:
+                        fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+                        
+                        # Guardamos en el orden exacto de tus columnas de Préstamos: Alumno, Curso, Libro, Fecha
+                        nueva_fila = pd.DataFrame([[nombre_alumno, año_curso, libro_elegido, fecha_hoy]])
+                        
+                        conn.append(
+                            worksheet="Prestamos",
+                            data=nueva_fila,
+                        )
+                        
+                        st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada. Pasá por biblioteca.")
+                        st.balloons()
+                        
+                    except Exception as error_escritura:
+                        st.error(f"Error al guardar en el Excel: {error_escritura}")
 
 except Exception as e:
     st.error(f"Error de conexión con la base de datos: {e}")
