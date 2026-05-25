@@ -14,13 +14,13 @@ with st.sidebar:
     st.info("Desarrollado para la bitácora de proyecto institucional.")
 
 # --- TÍTULO PRINCIPAL ---
-st.title("📚 Mi Biblioteca Virtual")
+st.title("Mi Biblioteca Virtual")
 st.markdown("Bienvenido al catálogo digital. Aquí podés ver los libros disponibles y solicitar un préstamo.")
 st.divider()
 
 # --- CONEXIÓN A BASE DE DATOS (GOOGLE SHEETS) ---
 # Poné tu link real acá abajo
-url = "https://docs.google.com/spreadsheets/d/1YeDJ2Mp7YRj1wW5ktGAly3kbPANAOvQXTT9_r1eE608/edit?usp=sharing"
+url = "https://docs.google.com/spreadsheets/d/1fKr1898huosGb_-nZT_Jx25LhqsLA1gx0XQd5TLZeNI/edit?usp=sharing"
 
 try:
     # ttl=0 hace que refresque la info al instante si cambia el Excel
