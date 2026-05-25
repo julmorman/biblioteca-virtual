@@ -31,10 +31,10 @@ try:
     from datetime import datetime
 
     # --- PESTAÑAS DE LA APLICACIÓN ---
-    tab1, tab2 = st.tabs(["📖 Catálogo Disponibles", "🙋 Solicitar Préstamo"])
+    tab1, tab2 = st.tabs(["Catálogo Disponibles", "Solicitar Préstamo"])
 
     with tab1:
-        st.subheader("📚 Libros en Estantería")
+        st.subheader("Libros en Estantería")
         
         # Convertimos la columna 'Disponibles' a números por seguridad
         df['Disponibles'] = pd.to_numeric(df['Disponibles'], errors='coerce')
@@ -48,7 +48,7 @@ try:
             st.warning("Lo sentimos, no hay libros disponibles en este momento.")
 
     with tab2:
-        st.subheader("🙋 Registrar Pedido de Préstamo")
+        st.subheader("Registrar Pedido de Préstamo")
         
         with st.form("formulario_prestamo", clear_on_submit=True):
             nombre_alumno = st.text_input("Nombre y Apellido del Alumno:")
@@ -57,35 +57,54 @@ try:
             if not libros_con_stock.empty:
                 lista_libros = libros_con_stock['Titulo'].tolist()
             else:
-                lista_libros = ["No hay stock disponible"]
+                lista_libros = []
                 
-            libro_elegido = st.selectbox("Seleccioná el Libro que querés llevarte (Podés escribir para buscar):", lista_libros)
+            # CORRECCIÓN DE UI: index=None hace que arranque vacío sin preseleccionar nada
+            libro_elegido = st.selectbox(
+                "Seleccioná el Libro que querés llevarte:", 
+                lista_libros, 
+                index=None, 
+                placeholder="Empezá a escribir el nombre del libro..."
+            )
             
             boton_enviar = st.form_submit_button("Confirmar Reserva de Libro")
             
             if boton_enviar:
                 if nombre_alumno.strip() == "":
-                    st.error("❌ Por favor, ingresá tu nombre antes de enviar.")
-                elif libro_elegido == "No hay stock disponible":
-                    st.error("❌ No podés solicitar préstamos si no hay stock disponible.")
+                    st.error("Por favor, ingresá tu nombre antes de enviar.")
+                elif libro_elegido is None:
+                    st.error("Por favor, seleccioná un libro de la lista.")
                 else:
                     try:
                         fecha_hoy = datetime.now().strftime("%d/%m/%Y")
                         
-                        # Guardamos en el orden exacto de tus columnas de Préstamos: Alumno, Curso, Libro, Fecha
-                        nueva_fila = pd.DataFrame([[nombre_alumno, año_curso, libro_elegido, fecha_hoy]])
+                        # 1. Intentamos leer lo que ya hay en la pestaña de préstamos para acumular datos
+                        try:
+                            df_prestamos_existente = conn.read(spreadsheet=url, worksheet="Prestamos", ttl=0)
+                        except:
+                            df_prestamos_existente = pd.DataFrame(columns=["Alumno", "Curso", "Libro", "Fecha"])
                         
-                        conn.append(
+                        # 2. Armamos la nueva fila como un DataFrame ordenado
+                        nueva_fila = pd.DataFrame([[nombre_alumno, año_curso, libro_elegido, fecha_hoy]], 
+                                                  columns=["Alumno", "Curso", "Libro", "Fecha"])
+                        
+                        # 3. Juntamos el historial existente con la nueva reserva
+                        if not df_prestamos_existente.empty:
+                            df_actualizado = pd.concat([df_prestamos_existente, nueva_fila], ignore_index=True)
+                        else:
+                            df_actualizado = nueva_fila
+                        
+                        # 4. CORRECCIÓN DE ESCRITURA: Usamos .update() que reescribe la tabla con el dato nuevo sumado
+                        conn.update(
                             worksheet="Prestamos",
-                            data=nueva_fila,
+                            data=df_actualizado,
                         )
                         
                         st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada. Pasá por biblioteca.")
-                        st.balloons()
+                        st.balloons() # ¡Que vuelen los globos!
                         
                     except Exception as error_escritura:
                         st.error(f"Error al guardar en el Excel: {error_escritura}")
-
 except Exception as e:
     st.error(f"Error de conexión con la base de datos: {e}")
 
