@@ -123,9 +123,3 @@ Este proyecto se encuentra bajo la Licencia MIT. Consulta el archivo `LICENSE` p
 ---
 
 *Desarrollado de forma académica enfocado en soluciones de software para la gestión escolar.*
-
-```
-
-Copiá este bloque completo, pegalo en el archivo `README.md` del repositorio secundario y te va a quedar impecable con el mismo diseño formal que tenías en el otro.
-
-```
