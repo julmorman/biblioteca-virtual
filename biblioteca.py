@@ -1,24 +1,33 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from streamlit_gsheets import GSheetsConnection
+import gspread
+from google.oauth2.service_account import Credentials
 
+# Configuración de página
 st.set_page_config(page_title="Mi Biblioteca Virtual", page_icon="📖", layout="centered")
 
 st.title("Mi Biblioteca Virtual")
 st.write("Bienvenido al catálogo digital. Aquí podés ver los libros disponibles y solicitar un préstamo.")
 
 try:
-    # Levanta la clave con comillas triples y limpia saltos dobles si el navegador los metió
-    raw_key = st.secrets["connections"]["gsheets"]["private_key"]
+    # 1. Definimos los accesos que necesita Google
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     
-    # Conectamos usando el gestor interno de Streamlit
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    url_excel = st.secrets["connections"]["gsheets"]["spreadsheet"]
+    # 2. Leemos el archivo JSON local de forma directa y limpia
+    creds = Credentials.from_service_account_file("llave_google.json", scopes=scope)
+    client = gspread.authorize(creds)
     
-    # Leemos la hoja de libros
-    df = conn.read(spreadsheet=url_excel, worksheet="Libros", ttl=0)
+    # 3. Abrimos el Excel usando el ID exacto de tu enlace
+    spreadsheet_id = "1fKr1898huosGb_-nZT_Jx25LhqsLA1gx0XQd5TLZeNI"
+    sheet = client.open_by_key(spreadsheet_id)
     
+    # Leemos la hoja de Libros
+    worksheet_libros = sheet.worksheet("Libros")
+    data_libros = worksheet_libros.get_all_records()
+    df = pd.DataFrame(data_libros)
+    
+    # Creamos las pestañas de navegación
     tab1, tab2 = st.tabs(["📖 Catálogo Disponibles", "🙋 Solicitar Préstamo"])
 
     with tab1:
@@ -52,25 +61,18 @@ try:
                     try:
                         fecha_hoy = datetime.now().strftime("%d/%m/%Y")
                         
-                        try:
-                            df_prestamos_existente = conn.read(spreadsheet=url_excel, worksheet="Prestamos", ttl=0)
-                            if df_prestamos_existente is None or df_prestamos_existente.empty:
-                                df_prestamos_existente = pd.DataFrame(columns=["Alumno", "Curso", "Libro", "Fecha"])
-                        except:
-                            df_prestamos_existente = pd.DataFrame(columns=["Alumno", "Curso", "Libro", "Fecha"])
+                        worksheet_prestamos = sheet.worksheet("Prestamos")
                         
-                        nueva_fila = pd.DataFrame([[nombre_alumno, año_curso, libro_elegido, fecha_hoy]], columns=["Alumno", "Curso", "Libro", "Fecha"])
-                        df_prestamos_existente.columns = ["Alumno", "Curso", "Libro", "Fecha"]
-                        df_actualizado = pd.concat([df_prestamos_existente, nueva_fila], ignore_index=True)
+                        # Agregamos la fila directo al final del Excel de Google
+                        worksheet_prestamos.append_row([nombre_alumno, año_curso, libro_elegido, fecha_hoy])
                         
-                        conn.update(spreadsheet=url_excel, worksheet="Prestamos", data=df_actualizado)
                         st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada.")
                         st.balloons()
                     except Exception as error_escritura:
                         st.error(f"Error al guardar en el Excel: {error_escritura}")
 
 except Exception as e:
-    st.error(f"Error de credenciales o configuración: {e}")
+    st.error(f"Error de conexión con la base de datos: {e}")
 
 st.divider()
 st.markdown('<div style="text-align: center; color: #888888; font-size: 13px;">© 2026 Proyecto Biblioteca Escolar</div>', unsafe_allow_html=True)
