@@ -9,23 +9,20 @@ st.set_page_config(page_title="Mi Biblioteca Virtual", page_icon="📖", layout=
 st.title("Mi Biblioteca Virtual")
 st.write("Bienvenido al catálogo digital. Aquí podés ver los libros disponibles y solicitar un préstamo.")
 
+# Intentamos conectar con Google Sheets de forma segura
 try:
-    # 1. CREAMOS LA CONEXIÓN USANDO LOS SECRETS AUTOMÁTICAMENTE
     conn = st.connection("gsheets", type=GSheetsConnection)
+    url_excel = st.secrets["connections"]["gsheets"]["spreadsheet"]
     
-    # 2. LEEMOS EL CATÁLOGO DE LIBROS (Ponemos ttl=0 para que se actualice al instante)
-    df = conn.read(worksheet="Libros", ttl=0)
-
+    # Intentamos leer la hoja de Libros
+    df = conn.read(spreadsheet=url_excel, worksheet="Libros", ttl=0)
+    
     # --- PESTAÑAS DE LA APLICACIÓN ---
     tab1, tab2 = st.tabs(["📖 Catálogo Disponibles", "🙋 Solicitar Préstamo"])
 
     with tab1:
         st.subheader("📚 Libros en Estantería")
-        
-        # Limpiamos y convertimos la columna 'Disponibles' a números
         df['Disponibles'] = pd.to_numeric(df['Disponibles'], errors='coerce')
-        
-        # Filtramos para mostrar solo los que tienen stock real
         libros_con_stock = df[df['Disponibles'] > 0]
 
         if not libros_con_stock.empty:
@@ -40,12 +37,8 @@ try:
             nombre_alumno = st.text_input("Nombre y Apellido del Alumno:")
             año_curso = st.selectbox("Año / Curso:", ["1ro", "2do", "3ro", "4to", "5to", "6to"])
             
-            if not libros_con_stock.empty:
-                lista_libros = libros_con_stock['Titulo'].tolist()
-            else:
-                lista_libros = []
+            lista_libros = libros_con_stock['Titulo'].tolist() if not libros_con_stock.empty else []
                 
-            # Buscador predictivo que arranca limpio
             libro_elegido = st.selectbox(
                 "Seleccioná el Libro que querés llevarte:", 
                 lista_libros, 
@@ -64,47 +57,36 @@ try:
                     try:
                         fecha_hoy = datetime.now().strftime("%d/%m/%Y")
                         
-                        # Intentamos leer el historial existente en Prestamos
                         try:
-                            df_prestamos_existente = conn.read(worksheet="Prestamos", ttl=0)
+                            df_prestamos_existente = conn.read(spreadsheet=url_excel, worksheet="Prestamos", ttl=0)
+                            if df_prestamos_existente is None or df_prestamos_existente.empty:
+                                df_prestamos_existente = pd.DataFrame(columns=["Alumno", "Curso", "Libro", "Fecha"])
                         except:
                             df_prestamos_existente = pd.DataFrame(columns=["Alumno", "Curso", "Libro", "Fecha"])
                         
-                        # Armamos la nueva fila
                         nueva_fila = pd.DataFrame([[nombre_alumno, año_curso, libro_elegido, fecha_hoy]], 
                                                   columns=["Alumno", "Curso", "Libro", "Fecha"])
                         
-                        # Consolidamos las tablas
-                        if not df_prestamos_existente.empty:
-                            df_actualizado = pd.concat([df_prestamos_existente, nueva_fila], ignore_index=True)
-                        else:
-                            df_actualizado = nueva_fila
+                        df_prestamos_existente.columns = ["Alumno", "Curso", "Libro", "Fecha"]
+                        df_actualizado = pd.concat([df_prestamos_existente, nueva_fila], ignore_index=True)
                         
-                        # Guardamos de forma segura con .update() usando la cuenta de servicio
                         conn.update(
+                            spreadsheet=url_excel,
                             worksheet="Prestamos",
                             data=df_actualizado,
                         )
                         
-                        st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada. Pasá por biblioteca.")
+                        st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada.")
                         st.balloons()
                         
                     except Exception as error_escritura:
-                        st.error(f"Error al guardar en el Excel: {error_escritura}")
+                        st.error(f"Error al guardar el préstamo: {error_escritura}")
 
 except Exception as e:
-    st.error(f"Error de conexión con la base de datos: {e}")
+    # Si la clave de los secrets está rota, se detiene acá con un cartel claro
+    st.error(f"Error de credenciales o configuración: {e}")
+    st.info("Revisá que la clave del archivo Secrets esté copiada en una sola línea continua.")
 
-# --- FOOTER PROFESIONAL ---
+# --- FOOTER ---
 st.divider()
-st.markdown(
-    """
-    <style>
-    .footer { text-align: center; color: #888888; font-size: 13px; margin-top: 50px; }
-    </style>
-    <div class="footer">
-        © 2026 Proyecto Biblioteca Escolar • Diseñado para Think Digital Hub
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown('<div style="text-align: center; color: #888888; font-size: 13px;">© 2026 Proyecto Biblioteca Escolar</div>', unsafe_allow_html=True)
