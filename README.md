@@ -13,10 +13,10 @@ Una aplicación web robusta y segura diseñada para automatizar la gestión, res
 
 ## Características Principales
 
-* ** Sincronización en Tiempo Real:** Lectura inmediata del catálogo disponible y actualización instantánea del stock tras cada reserva.
-* ** Seguridad de Grado Operativo:** Conexión privada mediante Cuentas de Servicio de Google Cloud (GCP) sin exponer la base de datos de forma pública.
-* ** Interfaz Optimizada (UX/UI):** Buscador predictivo de libros, validación interactiva de formularios para estudiantes y efectos visuales de confirmación.
-* ** Arquitectura Limpia:** Estructura de código modular y manejo avanzado de errores para evitar pantallas caídas.
+* **Sincronización en Tiempo Real:** Lectura inmediata del catálogo disponible y actualización instantánea del stock tras cada reserva.
+* **Seguridad de Grado Operativo:** Conexión privada mediante Cuentas de Servicio de Google Cloud (GCP) sin exponer la base de datos de forma pública.
+* **Interfaz Optimizada (UX/UI):** Buscador predictivo de libros, validación interactiva de formularios para estudiantes y efectos visuales de confirmación.
+* **Arquitectura Limpia:** Estructura de código modular y manejo avanzado de errores para evitar pantallas caídas.
 
 ---
 
@@ -26,7 +26,7 @@ Antes de comenzar con la instalación local, asegúrate de tener instalado en tu
 
 * Python 3.10 o una versión superior.
 * Una cuenta activa de Google Cloud Platform (para la gestión de credenciales API).
-* Una copia de la plantilla de Google Sheets con las pestañas obligatorias (`Libros` y `Prestamos`).
+* Una copia de la plantilla de Google Sheets con las pestañas obligatorias (`Libros` y `Préstamos`).
 
 ---
 
@@ -106,7 +106,7 @@ La aplicación se abrirá de forma automática en tu navegador web en la direcci
 
 ##  Contribuciones y Desarrollo
 
-¡Las sugerencias y colaboraciones son bienvenidas! Si encuentras algún error o quieres proponer una mejora en la lógica del sistema:
+¡Las sugerencias y colaboraciones son bienvenidas! Si encontrás algún error o querés proponer una mejora en la lógica del sistema:
 
 1. Haz un **Fork** de este repositorio.
 2. Crea una rama para tu funcionalidad (`git checkout -b feature/NuevaMejora`).
