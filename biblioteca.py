@@ -80,5 +80,8 @@ try:
                     except Exception as error_escritura:
                         st.error(f"Error al guardar en el Excel: {error_escritura}")
 
+
 except Exception as e:
-    st.error(f"Error de conexión con la base de datos: {e}")
+    # Este cambio va a obligar a Streamlit a mostrar el texto explícito del error
+    st.error("🚨 Error de conexión detallado:")
+    st.exception(e)
