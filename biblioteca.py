@@ -4,30 +4,42 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Configuración de página
+# Configuración de la interfaz
 st.set_page_config(page_title="Mi Biblioteca Virtual", page_icon="📖", layout="centered")
 
 st.title("Mi Biblioteca Virtual")
 st.write("Bienvenido al catálogo digital. Aquí podés ver los libros disponibles y solicitar un préstamo.")
 
 try:
-    # 1. Definimos los accesos que necesita Google
-    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    # 1. Reconstruimos el formato de credenciales de Google de forma dinámica y segura
+    info_claves = {
+        "type": "service_account",
+        "project_id": st.secrets["connections"]["gsheets"]["project_id"],
+        "private_key_id": st.secrets["connections"]["gsheets"]["private_key_id"],
+        "private_key": st.secrets["connections"]["gsheets"]["private_key"].replace("\\n", "\n"),
+        "client_email": st.secrets["connections"]["gsheets"]["client_email"],
+        "client_id": st.secrets["connections"]["gsheets"]["client_id"],
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": st.secrets["connections"]["gsheets"]["client_x509_cert_url"]
+    }
     
-    # 2. Leemos el archivo JSON local de forma directa y limpia
-    creds = Credentials.from_service_account_file("llave_google.json", scopes=scope)
+    # 2. Autenticación directa sin archivos locales
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(info_claves, scopes=scope)
     client = gspread.authorize(creds)
     
-    # 3. Abrimos el Excel usando el ID exacto de tu enlace
+    # 3. Conexión a la planilla
     spreadsheet_id = "1fKr1898huosGb_-nZT_Jx25LhqsLA1gx0XQd5TLZeNI"
     sheet = client.open_by_key(spreadsheet_id)
     
-    # Leemos la hoja de Libros
+    # Lectura de datos
     worksheet_libros = sheet.worksheet("Libros")
     data_libros = worksheet_libros.get_all_records()
     df = pd.DataFrame(data_libros)
     
-    # Creamos las pestañas de navegación
+    # Pestañas de navegación
     tab1, tab2 = st.tabs(["📖 Catálogo Disponibles", "🙋 Solicitar Préstamo"])
 
     with tab1:
@@ -60,10 +72,7 @@ try:
                 else:
                     try:
                         fecha_hoy = datetime.now().strftime("%d/%m/%Y")
-                        
                         worksheet_prestamos = sheet.worksheet("Prestamos")
-                        
-                        # Agregamos la fila directo al final del Excel de Google
                         worksheet_prestamos.append_row([nombre_alumno, año_curso, libro_elegido, fecha_hoy])
                         
                         st.success(f"¡Listo, {nombre_alumno}! Tu solicitud para **'{libro_elegido}'** fue registrada.")
@@ -73,6 +82,3 @@ try:
 
 except Exception as e:
     st.error(f"Error de conexión con la base de datos: {e}")
-
-st.divider()
-st.markdown('<div style="text-align: center; color: #888888; font-size: 13px;">© 2026 Proyecto Biblioteca Escolar</div>', unsafe_allow_html=True)
