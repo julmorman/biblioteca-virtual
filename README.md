@@ -1,4 +1,4 @@
-# 📖 Biblioteca Virtual - Backend & Frontend
+# Biblioteca Virtual - Backend & Frontend
 
 ![Estado del Proyecto](https://img.shields.io/badge/status-active-success.svg)
 ![Versión de Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
