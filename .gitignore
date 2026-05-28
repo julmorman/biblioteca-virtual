@@ -1,3 +1,8 @@
 .venv/
 __pycache__/
 .streamlit/
+
+# Seguridad: Llaves y secretos
+llave_google.json
+*.json
+.env
