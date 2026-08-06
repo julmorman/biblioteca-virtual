@@ -1,8 +1,12 @@
-.venv/
-__pycache__/
-.streamlit/
+# Apps Script (clasp): .clasp.json referencia un scriptId específico
+# de cada desarrollador/despliegue, no es parte del código fuente.
+.clasp.json
+.clasprc.json
 
-# Seguridad: Llaves y secretos
-llave_google.json
-*.json
+# Seguridad: credenciales y links con acceso a la Sheet real
+credentials*.json
 .env
+link_gsheets
+
+# Notas de trabajo internas, no publicadas
+PROBLEMAS.md
