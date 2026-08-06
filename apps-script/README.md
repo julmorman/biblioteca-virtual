@@ -11,7 +11,10 @@ ni `secrets.toml`. El HTML lo servís vos, con control total del diseño.
 - `Code.js` — lógica de servidor: lee el catálogo, valida y registra
   préstamos, decrementa el stock con `LockService` para evitar que dos
   alumnos se lleven el último ejemplar al mismo tiempo.
-- `Index.html` — frontend (catálogo + formulario), sin frameworks.
+- `Index.html` — estructura del frontend (catálogo + formulario), sin frameworks.
+- `Stylesheet.html` / `JavaScript.html` — CSS y JS del frontend, separados de
+  `Index.html` e inyectados con `include()` (patrón recomendado por Google
+  para proyectos de Apps Script — evita un único archivo HTML gigante).
 
 ## Estructura esperada de la Sheet
 

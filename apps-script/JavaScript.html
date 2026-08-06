@@ -1,0 +1,63 @@
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      btn.classList.add('active');
+    });
+  });
+
+  function cargarCatalogo() {
+    google.script.run.withSuccessHandler(renderCatalogo).getCatalogo();
+  }
+
+  function renderCatalogo(libros) {
+    const tbody = document.querySelector('#tabla-libros tbody');
+    const select = document.getElementById('libro');
+
+    tbody.innerHTML = libros.length
+      ? libros.map(l => `<tr><td>${l.titulo}</td><td>${l.autor}</td><td>${l.disponibles}</td></tr>`).join('')
+      : '<tr><td colspan="3">No hay libros disponibles.</td></tr>';
+
+    select.innerHTML = '<option value="" disabled selected>Elegí un libro...</option>' +
+      libros.map(l => `<option value="${l.titulo}">${l.titulo}</option>`).join('');
+  }
+
+  document.getElementById('form-prestamo').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const boton = document.getElementById('btn-confirmar');
+    const msg = document.getElementById('msg');
+    const datos = {
+      nombre: document.getElementById('nombre').value,
+      curso: document.getElementById('curso').value,
+      libro: document.getElementById('libro').value
+    };
+
+    boton.disabled = true;
+    msg.className = 'msg';
+    msg.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        boton.disabled = false;
+        if (res.ok) {
+          msg.textContent = '✅ ¡Listo! Tu solicitud fue registrada.';
+          msg.className = 'msg ok';
+          document.getElementById('form-prestamo').reset();
+          cargarCatalogo();
+        } else {
+          msg.textContent = '❌ ' + res.error;
+          msg.className = 'msg error';
+        }
+      })
+      .withFailureHandler(function (err) {
+        boton.disabled = false;
+        msg.textContent = '❌ Error inesperado: ' + err.message;
+        msg.className = 'msg error';
+      })
+      .registrarPrestamo(datos);
+  });
+
+  cargarCatalogo();
+</script>

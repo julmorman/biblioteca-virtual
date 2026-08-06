@@ -6,7 +6,6 @@
 # Seguridad: credenciales y links con acceso a la Sheet real
 credentials*.json
 .env
-link_gsheets
 
 # Notas de trabajo internas, no publicadas
-PROBLEMAS.md
+random_files/

@@ -12,6 +12,11 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
+/** Inyecta Stylesheet.html / JavaScript.html dentro de Index.html. */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
 /**
  * Devuelve el catálogo con stock > 0.
  * Encabezados esperados en la fila 1 de "Libros":
