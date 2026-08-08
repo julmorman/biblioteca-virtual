@@ -1,4 +1,16 @@
 <script>
+  function escapeHtml(valor) {
+    return String(valor == null ? '' : valor).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function formatearFecha(fecha) {
+    if (!fecha) return '';
+    const d = new Date(fecha);
+    return isNaN(d) ? '' : d.toLocaleDateString('es-AR');
+  }
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -7,6 +19,66 @@
       btn.classList.add('active');
     });
   });
+
+  let perfilActual = null;
+
+  function iniciar() {
+    google.script.run
+      .withSuccessHandler(onPerfil)
+      .withFailureHandler(onErrorInicial)
+      .obtenerPerfilActual();
+  }
+
+  function onErrorInicial(err) {
+    document.body.innerHTML = '<p class="msg error">Error inesperado: ' + escapeHtml(err.message) + '</p>';
+  }
+
+  function onPerfil(perfil) {
+    if (!perfil) {
+      document.getElementById('perfil-gate').hidden = false;
+      return;
+    }
+    perfilActual = perfil;
+    mostrarApp();
+  }
+
+  document.getElementById('form-perfil').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const datos = {
+      nombre: document.getElementById('perfil-nombre').value,
+      curso: document.getElementById('perfil-curso').value
+    };
+    const msg = document.getElementById('perfil-msg');
+    msg.className = 'msg';
+    msg.textContent = '';
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (res.ok) {
+          perfilActual = res.perfil;
+          document.getElementById('perfil-gate').hidden = true;
+          mostrarApp();
+        } else {
+          msg.textContent = '❌ ' + res.error;
+          msg.className = 'msg error';
+        }
+      })
+      .withFailureHandler(function (err) {
+        msg.textContent = '❌ Error inesperado: ' + err.message;
+        msg.className = 'msg error';
+      })
+      .crearPerfil(datos);
+  });
+
+  function mostrarApp() {
+    document.getElementById('app').hidden = false;
+    if (perfilActual.rol === 'staff') {
+      document.getElementById('tab-btn-staff').hidden = false;
+      cargarStaff();
+    }
+    cargarCatalogo();
+    cargarMisPrestamos();
+  }
 
   function cargarCatalogo() {
     google.script.run.withSuccessHandler(renderCatalogo).getCatalogo();
@@ -17,22 +89,18 @@
     const select = document.getElementById('libro');
 
     tbody.innerHTML = libros.length
-      ? libros.map(l => `<tr><td>${l.titulo}</td><td>${l.autor}</td><td>${l.disponibles}</td></tr>`).join('')
+      ? libros.map(l => `<tr><td>${escapeHtml(l.titulo)}</td><td>${escapeHtml(l.autor)}</td><td>${l.disponibles}</td></tr>`).join('')
       : '<tr><td colspan="3">No hay libros disponibles.</td></tr>';
 
     select.innerHTML = '<option value="" disabled selected>Elegí un libro...</option>' +
-      libros.map(l => `<option value="${l.titulo}">${l.titulo}</option>`).join('');
+      libros.map(l => `<option value="${escapeHtml(l.titulo)}">${escapeHtml(l.titulo)}</option>`).join('');
   }
 
   document.getElementById('form-prestamo').addEventListener('submit', function (e) {
     e.preventDefault();
     const boton = document.getElementById('btn-confirmar');
     const msg = document.getElementById('msg');
-    const datos = {
-      nombre: document.getElementById('nombre').value,
-      curso: document.getElementById('curso').value,
-      libro: document.getElementById('libro').value
-    };
+    const datos = { libro: document.getElementById('libro').value };
 
     boton.disabled = true;
     msg.className = 'msg';
@@ -46,6 +114,7 @@
           msg.className = 'msg ok';
           document.getElementById('form-prestamo').reset();
           cargarCatalogo();
+          cargarMisPrestamos();
         } else {
           msg.textContent = '❌ ' + res.error;
           msg.className = 'msg error';
@@ -59,5 +128,48 @@
       .registrarPrestamo(datos);
   });
 
-  cargarCatalogo();
+  function cargarMisPrestamos() {
+    google.script.run.withSuccessHandler(renderMisPrestamos).getMisPrestamos();
+  }
+
+  function renderMisPrestamos(prestamos) {
+    const tbody = document.querySelector('#tabla-mis-prestamos tbody');
+    tbody.innerHTML = prestamos.length
+      ? prestamos.map(p => `<tr><td>${escapeHtml(p.libro)}</td><td><span class="badge badge-${escapeHtml((p.estado || '').toLowerCase())}">${escapeHtml(p.estado)}</span></td><td>${formatearFecha(p.fecha)}</td></tr>`).join('')
+      : '<tr><td colspan="3">Todavía no pediste ningún préstamo.</td></tr>';
+  }
+
+  function cargarStaff() {
+    google.script.run.withSuccessHandler(renderSolicitudes).getSolicitudesPendientes();
+    google.script.run.withSuccessHandler(renderActivos).getPrestamosActivos();
+  }
+
+  function renderSolicitudes(solicitudes) {
+    const tbody = document.querySelector('#tabla-solicitudes tbody');
+    tbody.innerHTML = solicitudes.length
+      ? solicitudes.map(p => `<tr><td>${escapeHtml(p.libro)}</td><td>${escapeHtml(p.nombre)}</td><td>${escapeHtml(p.curso)}</td><td><button type="button" onclick="entregar('${p.id}')">Confirmar entrega</button></td></tr>`).join('')
+      : '<tr><td colspan="4">No hay solicitudes pendientes.</td></tr>';
+  }
+
+  function renderActivos(activos) {
+    const tbody = document.querySelector('#tabla-activos tbody');
+    tbody.innerHTML = activos.length
+      ? activos.map(p => `<tr><td>${escapeHtml(p.libro)}</td><td>${escapeHtml(p.nombre)}</td><td>${escapeHtml(p.curso)}</td><td><button type="button" onclick="devolver('${p.id}')">Confirmar devolución</button></td></tr>`).join('')
+      : '<tr><td colspan="4">No hay préstamos entregados.</td></tr>';
+  }
+
+  function entregar(id) {
+    google.script.run.withSuccessHandler(cargarStaff).confirmarEntrega(id);
+  }
+
+  function devolver(id) {
+    google.script.run
+      .withSuccessHandler(function () {
+        cargarStaff();
+        cargarCatalogo();
+      })
+      .confirmarDevolucion(id);
+  }
+
+  iniciar();
 </script>

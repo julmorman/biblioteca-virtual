@@ -8,13 +8,18 @@ gestionar, sin hosting que mantener.
 
 ## Cómo funciona
 
-- La "base de datos" es una Google Sheet con dos pestañas: `Libros`
-  (catálogo + stock) y `Prestamos` (registro de solicitudes).
+- La "base de datos" es una Google Sheet con tres pestañas: `Libros`
+  (catálogo + stock), `Prestamos` (ciclo de vida de cada préstamo) y
+  `Perfiles` (una fila por persona, con su rol).
 - El código (`apps-script/`) corre bound a esa Sheet, con el login de Google
-  de quien la administra — no requiere cuentas de servicio ni claves de API.
-- Sirve una página web propia (HTML/CSS/JS) para que los alumnos vean el
-  catálogo y pidan préstamos; el stock se valida y descuenta en el momento,
-  protegido contra que dos alumnos se lleven el mismo último ejemplar a la vez.
+  de quien accede — restringido al dominio del colegio — no requiere cuentas
+  de servicio ni claves de API, y ese mismo login identifica a cada persona.
+- Sirve una página web propia (HTML/CSS/JS): los alumnos ven el catálogo y
+  piden préstamos (el stock se valida y descuenta en el momento, protegido
+  contra que dos personas se lleven el mismo último ejemplar a la vez); el
+  ciclo completo es `Solicitado → Entregado → Devuelto`, con quien tenga rol
+  `staff` confirmando la entrega y la devolución en persona desde su propia
+  pestaña dentro de la misma app.
 
 ## Instalación (para quien administra la biblioteca de una escuela)
 
