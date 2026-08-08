@@ -59,18 +59,42 @@ Hay dos niveles de prueba, según qué querés validar:
 estados, vista de staff)** — no requiere Workspace, sirve con tu cuenta
 personal:
 
-1. Cambiá `webapp.access` en `appsscript.json` de `"DOMAIN"` a `"MYSELF"`
+1. `npx @google/clasp login` (una vez — abre el navegador, autoriza tu
+   cuenta de Google). No hace falta instalarlo global, `npx` alcanza.
+2. Creá una Google Sheet nueva y armá 3 pestañas con estos headers exactos
+   en la fila 1 (mismo orden — `appendRow` escribe por posición):
+   - `Libros`: `Id_Libro | Titulo | Autor | Cantidad_Total | Disponibles | Prestado`
+   - `Prestamos`: `Id_Prestamo | Fecha | Email | Nombre | Curso | Id_Libro | Libro | Estado | Fecha_Entrega | Fecha_Devolucion`
+   - `Perfiles`: `Email | Nombre | Curso | Rol | FechaAlta`
+   Cargá 1-2 filas de prueba en `Libros` (con `Cantidad_Total` puesto y
+   `Prestado` en `0`) para tener algo en el catálogo.
+3. Cambiá `webapp.access` en `appsscript.json` de `"DOMAIN"` a `"MYSELF"`
    (solo vos vas a poder abrirlo — no hace falta dominio para eso). Es un
    cambio temporal, solo para probar; no lo commitees así.
-2. Seguí los pasos de setup de más abajo (`clasp create`/`clone`, `clasp
-   push`, `clasp deploy`) y abrí la URL que te da `clasp deploy`.
-3. Vas a entrar siempre como vos mismo/a. Para ver la vista de `member`
-   completá tu perfil normal. Para ver la vista de `staff`, andá a la
-   pestaña `Perfiles` de la Sheet y cambiá a mano tu propia fila a
-   `Rol: staff`, recargá la página.
-4. Esto **no** prueba el gate de dominio en sí (`access: DOMAIN`) ni que
+4. Desde `apps-script/`, vinculá el proyecto a esa Sheet (el ID es el que
+   aparece en su URL):
+   ```bash
+   cd apps-script
+   npx @google/clasp create --type sheets --title "Bibliotech test" --parentId <ID_DE_LA_SPREADSHEET>
+   ```
+5. Subí el código y desplegalo:
+   ```bash
+   npx @google/clasp push
+   npx @google/clasp deploy
+   ```
+   `clasp deploy` te devuelve una URL — esa es tu "servidor local".
+6. Abrí esa URL: vas a entrar siempre como vos mismo/a. Completá el perfil
+   para ver la vista de `member`. Para ver la vista de `staff`, andá a la
+   pestaña `Perfiles` de la Sheet, cambiá a mano tu propia fila a
+   `Rol: staff`, y recargá la página.
+7. Cuando cambies `Code.js`/`Index.html`/etc., repetí `clasp push` y
+   recargá — no hace falta un `clasp deploy` nuevo para ver los cambios si
+   abrís la URL de **Implementación de prueba** (`clasp open` → Implementar
+   → Implementaciones de prueba), que sirve siempre la última versión
+   pusheada sin publicar una versión nueva cada vez.
+8. Esto **no** prueba el gate de dominio en sí (`access: DOMAIN`) ni que
    dos cuentas distintas se vean como dos perfiles distintos — para eso
-   hace falta B.
+   hace falta B. Antes de commitear, volvé `access` a `"DOMAIN"`.
 
 **B) Validación completa antes de llevarlo a una escuela real** — sí
 requiere un dominio Workspace, pero no hace falta que sea el del colegio
