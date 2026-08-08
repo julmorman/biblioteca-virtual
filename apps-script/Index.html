@@ -8,41 +8,68 @@
   <h1>📖 Bibliotech</h1>
   <p>Catálogo digital de la biblioteca. Consultá los libros disponibles o pedí un préstamo.</p>
 
-  <div class="tabs">
-    <button type="button" class="tab-btn active" data-tab="catalogo">📚 Catálogo</button>
-    <button type="button" class="tab-btn" data-tab="prestamo">🙋 Solicitar préstamo</button>
-  </div>
+  <div id="perfil-gate" class="perfil-gate" hidden>
+    <h2>Completá tu perfil</h2>
+    <p>Es por única vez: lo vamos a recordar para tus próximos préstamos.</p>
+    <form id="form-perfil">
+      <label for="perfil-nombre">Nombre y apellido</label>
+      <input type="text" id="perfil-nombre" required>
 
-  <div id="catalogo" class="tab-content active">
-    <table id="tabla-libros">
-      <thead><tr><th>Título</th><th>Autor</th><th>Disponibles</th></tr></thead>
-      <tbody><tr><td colspan="3">Cargando...</td></tr></tbody>
-    </table>
-  </div>
+      <label for="perfil-curso">Curso (o "Docente" si sos profe)</label>
+      <input type="text" id="perfil-curso" required>
 
-  <div id="prestamo" class="tab-content">
-    <form id="form-prestamo">
-      <label for="nombre">Nombre y apellido</label>
-      <input type="text" id="nombre" required>
-
-      <label for="curso">Curso</label>
-      <select id="curso" required>
-        <option value="1ro">1ro</option>
-        <option value="2do">2do</option>
-        <option value="3ro">3ro</option>
-        <option value="4to">4to</option>
-        <option value="5to">5to</option>
-        <option value="6to">6to</option>
-      </select>
-
-      <label for="libro">Libro</label>
-      <select id="libro" required>
-        <option value="" disabled selected>Elegí un libro...</option>
-      </select>
-
-      <button type="submit" id="btn-confirmar">Confirmar reserva</button>
+      <button type="submit">Guardar</button>
     </form>
-    <div id="msg" class="msg"></div>
+    <div id="perfil-msg" class="msg"></div>
+  </div>
+
+  <div id="app" hidden>
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="catalogo">📚 Catálogo</button>
+      <button type="button" class="tab-btn" data-tab="prestamo">🙋 Solicitar préstamo</button>
+      <button type="button" class="tab-btn" data-tab="mis-prestamos">📄 Mis préstamos</button>
+      <button type="button" class="tab-btn" data-tab="staff" id="tab-btn-staff" hidden>🗂️ Staff</button>
+    </div>
+
+    <div id="catalogo" class="tab-content active">
+      <table id="tabla-libros">
+        <thead><tr><th>Título</th><th>Autor</th><th>Disponibles</th></tr></thead>
+        <tbody><tr><td colspan="3">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="prestamo" class="tab-content">
+      <form id="form-prestamo">
+        <label for="libro">Libro</label>
+        <select id="libro" required>
+          <option value="" disabled selected>Elegí un libro...</option>
+        </select>
+
+        <button type="submit" id="btn-confirmar">Confirmar reserva</button>
+      </form>
+      <div id="msg" class="msg"></div>
+    </div>
+
+    <div id="mis-prestamos" class="tab-content">
+      <table id="tabla-mis-prestamos">
+        <thead><tr><th>Libro</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody><tr><td colspan="3">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div id="staff" class="tab-content">
+      <h3>Solicitudes pendientes</h3>
+      <table id="tabla-solicitudes">
+        <thead><tr><th>Libro</th><th>Nombre</th><th>Curso</th><th></th></tr></thead>
+        <tbody><tr><td colspan="4">Cargando...</td></tr></tbody>
+      </table>
+
+      <h3>Préstamos entregados</h3>
+      <table id="tabla-activos">
+        <thead><tr><th>Libro</th><th>Nombre</th><th>Curso</th><th></th></tr></thead>
+        <tbody><tr><td colspan="4">Cargando...</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <?!= include('JavaScript'); ?>
